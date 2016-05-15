@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Foodie</string>
-    <string name="title_foodieplace_detail">FoodiePlace Detail</string>
+    <string name="title_foodieplace_detail">Restaurant Detail</string>
+    <string name="no_data_available">No restaurants available</string>
+    <string name="title_activity_maps">Restaurant Map</string>
+    <string name="menu_map_mode">Show Restaurant Map</string>
 </resources>
