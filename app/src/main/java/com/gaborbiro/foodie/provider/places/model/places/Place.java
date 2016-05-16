@@ -1,8 +1,11 @@
-package com.gaborbiro.foodie.provider.places.model;
+package com.gaborbiro.foodie.provider.places.model.places;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.gaborbiro.foodie.provider.places.model.common.Geometry;
+import com.gaborbiro.foodie.provider.places.model.common.OpeningHours;
+import com.gaborbiro.foodie.provider.places.model.common.Photo;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;

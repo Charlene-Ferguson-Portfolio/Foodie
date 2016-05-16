@@ -1,4 +1,4 @@
-package com.gaborbiro.foodie.ui;
+package com.gaborbiro.foodie.ui.presenter;
 
 import android.Manifest;
 import android.app.Activity;
@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import com.gaborbiro.foodie.ProgressEvent;
 import com.gaborbiro.foodie.provider.places.PlacesApi;
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.gaborbiro.foodie.provider.retrofit.Callback;
 import com.gaborbiro.foodie.ui.model.LocationModel;
 import com.gaborbiro.foodie.ui.model.PlacesModel;
@@ -26,11 +26,9 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 import java.util.List;
 
-import se.walkercrou.places.Types;
+public class PlacesPresenterImpl implements PlacesPresenter {
 
-public class PlacesPresenter {
-
-    private static final String TAG = PlacesPresenter.class.getSimpleName();
+    private static final String TAG = PlacesPresenterImpl.class.getSimpleName();
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_AND_COARSE_LOCATION = 1;
 
     protected Context mAppContext;
@@ -40,9 +38,9 @@ public class PlacesPresenter {
     private final PlacesModel mPlacesModel = new PlacesModel();
     private final LocationModel mLocationModel = new LocationModel();
 
-    private final Callback<List<Place>> mPlacesApiCallback = new Callback<List<Place>>() {
+    private final Callback<List<Place>> mPlaceListCallback = new Callback<List<Place>>() {
         @Override public void onResponse(int requestId, List<Place> result) {
-            mPlacesModel.add(result);
+            mPlacesModel.addPlaces(result);
         }
 
         @Override public void onFailure(int requestId, Throwable t) {
@@ -50,7 +48,7 @@ public class PlacesPresenter {
         }
     };
 
-    public PlacesPresenter(Context appContext, PlacesApi placesApi, Activity activity) {
+    public PlacesPresenterImpl(Context appContext, PlacesApi placesApi, Activity activity) {
         mAppContext = appContext;
         mPlacesApi = placesApi;
         mActivity = activity;
@@ -75,7 +73,7 @@ public class PlacesPresenter {
             Location location = mLocationModel.getCurrentBestLocation();
             mPlacesApi.getPlaces(location.getLatitude(), location.getLongitude(),
                     LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
-                    mPlacesApiCallback);
+                    mPlaceListCallback);
         } else {
             Toast.makeText(mAppContext, "No location available", Toast.LENGTH_SHORT)
                     .show();
@@ -85,7 +83,7 @@ public class PlacesPresenter {
     public void loadPlaces(LatLng target) {
         mPlacesApi.getPlaces(target.latitude, target.longitude,
                 LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
-                mPlacesApiCallback);
+                mPlaceListCallback);
     }
 
     private void startListeningForLocation() {
@@ -98,7 +96,7 @@ public class PlacesPresenter {
                 tryLastKnownLocation(locationManager, LocationManager.NETWORK_PROVIDER);
 
                 if (mLocationModel.getCurrentBestLocation() == null) {
-                    ProgressEvent.sendProgressStartEvent(PlacesPresenter.this);
+                    ProgressEvent.sendProgressStartEvent(PlacesPresenterImpl.this);
                 }
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                         LocationUtils.LOCATION_UPDATE_THRESHOLD_TIME_MSEC,
@@ -129,13 +127,13 @@ public class PlacesPresenter {
             Logger.d(TAG, "Correction: " +
                     (int) LocationUtils.distance(discreteLastKnownLocation,
                             lastKnownLocation) + "m");
-            mLocationModel.set(discreteLastKnownLocation);
+            mLocationModel.setCurrentBestLocation(discreteLastKnownLocation);
         }
     }
 
     private void stopListeningForLocation() {
         if (mLocationModel.getCurrentBestLocation() != null) {
-            ProgressEvent.sendProgressEndEvent(PlacesPresenter.this);
+            ProgressEvent.sendProgressEndEvent(PlacesPresenterImpl.this);
         }
         if (hasFineLocationPermission() && hasCoarseLocationPermission()) {
             LocationManager locationManager =
@@ -160,7 +158,7 @@ public class PlacesPresenter {
     private LocationListener mLocationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
             if (mLocationModel.getCurrentBestLocation() != null) {
-                ProgressEvent.sendProgressEndEvent(PlacesPresenter.this);
+                ProgressEvent.sendProgressEndEvent(PlacesPresenterImpl.this);
             }
 
             Location discreteLocation = LocationUtils.roundDown(location);
@@ -169,7 +167,7 @@ public class PlacesPresenter {
                     mLocationModel.getCurrentBestLocation())) {
                 Logger.d(TAG, "New location correction: " +
                         (int) LocationUtils.distance(discreteLocation, location));
-                mLocationModel.set(discreteLocation);
+                mLocationModel.setCurrentBestLocation(discreteLocation);
                 loadPlaces();
             }
         }

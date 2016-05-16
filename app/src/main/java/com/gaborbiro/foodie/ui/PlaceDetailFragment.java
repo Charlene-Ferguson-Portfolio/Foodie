@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.gaborbiro.foodie.R;
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 
 /**
  * A fragment representing a single FoodiePlace detail screen.

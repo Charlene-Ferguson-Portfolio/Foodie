@@ -1,6 +1,6 @@
 package com.gaborbiro.foodie.ui.model;
 
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.google.common.collect.EvictingQueue;
 
 import org.greenrobot.eventbus.EventBus;
@@ -25,7 +25,7 @@ public class PlacesModel {
     /**
      * Only the last {@value MAX_PLACE_COUNT} places are preserved, the rest is evicted
      */
-    public void add(List<Place> places) {
+    public void addPlaces(List<Place> places) {
         mPlaces.addAll(places);
         sendPlacesUpdateEvent();
     }

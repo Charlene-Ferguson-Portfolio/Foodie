@@ -1,6 +1,7 @@
 package com.gaborbiro.foodie.provider.places;
 
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.place_details.PlaceDetails;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.gaborbiro.foodie.provider.retrofit.Callback;
 import com.gaborbiro.foodie.provider.retrofit.RetrofitUtil;
 
@@ -13,26 +14,43 @@ public class PlacesApiImpl implements PlacesApi {
     private static final String GOOGLE_PLACES_API_KEY =
             "AIzaSyBDwqC3Emv86CJOYxhfC_LYps9caIfucEs";
 
-    private PlacesApiRequestInterface mApi;
+    private DetailsRequestInterface mDetailsRequest;
+    private NearbySearchRequestInterface mNearbySearchRequest;
+
     private String mServerUrl;
 
-    private Call mCurrentCall;
+    private Call mCurrentDetailsCall;
+    private Call mCurrentPlacesCall;
 
-    public PlacesApiImpl(PlacesApiRequestInterface api, String serverUrl) {
-        mApi = api;
+    public PlacesApiImpl(NearbySearchRequestInterface nearbySearchRequest,
+            DetailsRequestInterface detailsRequest, String serverUrl) {
+        mNearbySearchRequest = nearbySearchRequest;
+        mDetailsRequest = detailsRequest;
         mServerUrl = serverUrl;
+    }
+
+    @Override public int getPlace(String placeId, Callback<PlaceDetails> callback) {
+        if (mCurrentDetailsCall != null) {
+            mCurrentDetailsCall.cancel();
+        }
+        mCurrentDetailsCall =
+                mDetailsRequest.getPlaceDetails(placeId, GOOGLE_PLACES_API_KEY);
+        RetrofitUtil.executeWithRetry(mCurrentDetailsCall, callback);
+        return mCurrentDetailsCall.request()
+                .url()
+                .hashCode();
     }
 
     @Override
     public int getPlaces(double latitude, double longitude, int radius, Type type,
             Callback<List<Place>> callback) {
-        if (mCurrentCall != null) {
-            mCurrentCall.cancel();
+        if (mCurrentPlacesCall != null) {
+            mCurrentPlacesCall.cancel();
         }
-        mCurrentCall = mApi.getPlaces(latitude + "," +
+        mCurrentPlacesCall = mNearbySearchRequest.getPlaces(latitude + "," +
                 longitude, radius, type.getValue(), GOOGLE_PLACES_API_KEY);
-        RetrofitUtil.executeWithRetry(mCurrentCall, callback);
-        return mCurrentCall.request()
+        RetrofitUtil.executeWithRetry(mCurrentPlacesCall, callback);
+        return mCurrentPlacesCall.request()
                 .url()
                 .hashCode();
     }

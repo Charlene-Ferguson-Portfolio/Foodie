@@ -9,4 +9,7 @@
 
     <dimen name="place_thumb_height">96dp</dimen>
     <dimen name="place_thumb_width">96dp</dimen>
+
+    <dimen name="content_icon_height">32dp</dimen>
+    <dimen name="content_icon_width">96dp</dimen>
 </resources>

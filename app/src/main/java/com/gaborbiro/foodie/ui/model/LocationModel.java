@@ -17,7 +17,7 @@ public class LocationModel {
         return mCurrentBestLocation;
     }
 
-    public void set(Location currentBestLocation) {
+    public void setCurrentBestLocation(Location currentBestLocation) {
         // TODO mCurrentBestLocation can be set to null (for whatever reason). Handle
         // that situation too.
         boolean firstLocationFetch = mCurrentBestLocation == null;

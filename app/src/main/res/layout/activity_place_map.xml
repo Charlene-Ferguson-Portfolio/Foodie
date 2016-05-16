@@ -22,8 +22,8 @@
         android:id="@+id/drawer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="visible"
         drawer:content="@+id/content"
-        android:visibility="gone"
         drawer:handle="@+id/handle">
 
         <RelativeLayout
@@ -36,21 +36,21 @@
                 android:id="@+id/image"
                 android:layout_width="@dimen/place_thumb_width"
                 android:layout_height="@dimen/place_thumb_height"
-                android:scaleType="fitCenter"
                 android:layout_marginBottom="@dimen/half_margin"
-                android:layout_marginLeft="@dimen/half_margin"
-                android:layout_marginStart="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
                 android:layout_marginEnd="@dimen/half_margin"
-                android:layout_marginTop="@dimen/half_margin" />
+                android:layout_marginLeft="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginTop="@dimen/half_margin"
+                android:scaleType="fitCenter"/>
 
             <TextView
                 android:id="@+id/name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
                 android:layout_marginEnd="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginTop="@dimen/half_margin"
                 android:layout_toRightOf="@id/image"
                 android:lines="1"
                 android:textStyle="bold"/>
@@ -59,32 +59,64 @@
                 android:id="@+id/address"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
+                android:layout_below="@id/name"
                 android:layout_marginEnd="@dimen/half_margin"
-                android:layout_toRightOf="@id/image"
-                android:layout_below="@id/name"/>
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginTop="@dimen/half_margin"
+                android:layout_toRightOf="@id/image"/>
 
             <RatingBar
                 android:id="@+id/rating"
+                style="?android:attr/ratingBarStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/address"
-                style="?android:attr/ratingBarStyleSmall"
-                android:layout_marginTop="@dimen/half_margin"
+                android:layout_marginBottom="@dimen/half_margin"
                 android:layout_marginEnd="@dimen/half_margin"
                 android:layout_marginRight="@dimen/half_margin"
-                android:layout_marginBottom="@dimen/half_margin"
+                android:layout_marginTop="@dimen/half_margin"
                 android:layout_toRightOf="@id/image"/>
         </RelativeLayout>
 
-        <TextView
+        <RelativeLayout
             android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#FFF"
-            android:gravity="center"
-            android:text="Content"/>
+            android:background="#FFF">
+
+            <com.gaborbiro.foodie.ui.AutoProgressIndicator
+                android:id="@+id/content_progress_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"/>
+
+            <View
+                android:id="@+id/separator"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/separator"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="@dimen/content_icon_width"
+                    android:layout_height="@dimen/content_icon_height"
+                    android:layout_margin="@dimen/half_margin"
+                    android:src="@drawable/ic_schedule_black_24dp"
+                    android:tint="@color/colorPrimary"/>
+
+                <TextView
+                    android:id="@+id/opening_hours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/half_margin"/>
+            </LinearLayout>
+        </RelativeLayout>
 
     </hollowsoft.slidingdrawer.SlidingDrawer>
 </FrameLayout>

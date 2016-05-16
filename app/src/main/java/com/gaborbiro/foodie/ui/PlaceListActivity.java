@@ -18,10 +18,11 @@ import android.widget.Toast;
 
 import com.gaborbiro.foodie.R;
 import com.gaborbiro.foodie.di.AppModule;
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.gaborbiro.foodie.ui.di.DaggerUIComponent;
 import com.gaborbiro.foodie.ui.di.PlacesPresenterModule;
 import com.gaborbiro.foodie.ui.model.PlacesModel;
+import com.gaborbiro.foodie.ui.presenter.PlacesPresenter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;

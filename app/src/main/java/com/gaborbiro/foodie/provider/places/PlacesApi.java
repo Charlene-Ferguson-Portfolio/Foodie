@@ -1,11 +1,14 @@
 package com.gaborbiro.foodie.provider.places;
 
-import com.gaborbiro.foodie.provider.places.model.Place;
+import com.gaborbiro.foodie.provider.places.model.place_details.PlaceDetails;
+import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.gaborbiro.foodie.provider.retrofit.Callback;
 
 import java.util.List;
 
 public interface PlacesApi {
+
+    int getPlace(String placeId, Callback<PlaceDetails> callback);
 
     /**
      * Fetch Places from Google Places API

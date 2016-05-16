@@ -1,4 +1,4 @@
-package com.gaborbiro.foodie.provider.places.model;
+package com.gaborbiro.foodie.provider.places.model.common;
 
 import android.os.Parcel;
 import android.os.Parcelable;
