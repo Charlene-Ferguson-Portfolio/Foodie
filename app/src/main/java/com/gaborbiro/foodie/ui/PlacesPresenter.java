@@ -17,8 +17,11 @@ import com.gaborbiro.foodie.ProgressEvent;
 import com.gaborbiro.foodie.provider.places.PlacesApi;
 import com.gaborbiro.foodie.provider.places.model.Place;
 import com.gaborbiro.foodie.provider.retrofit.Callback;
+import com.gaborbiro.foodie.ui.model.LocationModel;
+import com.gaborbiro.foodie.ui.model.PlacesModel;
 import com.gaborbiro.foodie.util.LocationUtils;
 import com.gaborbiro.foodie.util.Logger;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,33 +37,29 @@ public class PlacesPresenter {
     private PlacesApi mPlacesApi;
     private Activity mActivity;
 
-    private final PlacesModel mModel = new PlacesModel();
+    private final PlacesModel mPlacesModel = new PlacesModel();
+    private final LocationModel mLocationModel = new LocationModel();
 
     private final Callback<List<Place>> mPlacesApiCallback = new Callback<List<Place>>() {
         @Override public void onResponse(int requestId, List<Place> result) {
-            mModel.set(result, null);
+            mPlacesModel.add(result);
         }
 
         @Override public void onFailure(int requestId, Throwable t) {
-            t.printStackTrace();
-            mModel.set(null, t);
+            PlacesModel.sendErrorEvent(t);
         }
     };
 
-    private Location mCurrentBestLocation;
-
-    public PlacesPresenter(Context appContext, PlacesApi placesApi, Activity activity,
-            PlacesModel.Listener modelListener) {
+    public PlacesPresenter(Context appContext, PlacesApi placesApi, Activity activity) {
         mAppContext = appContext;
         mPlacesApi = placesApi;
         mActivity = activity;
-        mModel.setListener(modelListener);
     }
 
     public void onScreenStarted() {
         startListeningForLocation();
 
-        if (mCurrentBestLocation != null) {
+        if (mLocationModel.getCurrentBestLocation() != null) {
             // let's use the last known location instead of waiting for a lock
             // when a more accurate lock happens later, a new request will be made
             loadPlaces();
@@ -72,13 +71,21 @@ public class PlacesPresenter {
     }
 
     public void loadPlaces() {
-        if (mCurrentBestLocation != null) {
-            mPlacesApi.getPlaces(mCurrentBestLocation, LocationUtils.SEARCH_RADIUS_METERS,
-                    Types.TYPE_RESTAURANT, mPlacesApiCallback);
+        if (mLocationModel.getCurrentBestLocation() != null) {
+            Location location = mLocationModel.getCurrentBestLocation();
+            mPlacesApi.getPlaces(location.getLatitude(), location.getLongitude(),
+                    LocationUtils.SEARCH_RADIUS_METERS, Types.TYPE_RESTAURANT,
+                    mPlacesApiCallback);
         } else {
             Toast.makeText(mAppContext, "No location available", Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+
+    public void loadPlaces(LatLng target) {
+        mPlacesApi.getPlaces(target.latitude, target.longitude,
+                LocationUtils.SEARCH_RADIUS_METERS, Types.TYPE_RESTAURANT,
+                mPlacesApiCallback);
     }
 
     private void startListeningForLocation() {
@@ -90,7 +97,9 @@ public class PlacesPresenter {
                 tryLastKnownLocation(locationManager, LocationManager.GPS_PROVIDER);
                 tryLastKnownLocation(locationManager, LocationManager.NETWORK_PROVIDER);
 
-                ProgressEvent.sendProgressStartEvent(PlacesPresenter.this);
+                if (mLocationModel.getCurrentBestLocation() == null) {
+                    ProgressEvent.sendProgressStartEvent(PlacesPresenter.this);
+                }
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                         LocationUtils.LOCATION_UPDATE_THRESHOLD_TIME_MSEC,
                         LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS,
@@ -108,19 +117,24 @@ public class PlacesPresenter {
     private void tryLastKnownLocation(LocationManager locationManager, String provider)
             throws SecurityException {
         Location lastKnownLocation = locationManager.getLastKnownLocation(provider);
-        Location discreteLastKnownLocation = LocationUtils.roundUp(lastKnownLocation);
+
+        if (lastKnownLocation == null) {
+            return;
+        }
+
+        Location discreteLastKnownLocation = LocationUtils.roundDown(lastKnownLocation);
 
         if (LocationUtils.isBetterLocation(discreteLastKnownLocation,
-                mCurrentBestLocation)) {
+                mLocationModel.getCurrentBestLocation())) {
             Logger.d(TAG, "Correction: " +
                     (int) LocationUtils.distance(discreteLastKnownLocation,
                             lastKnownLocation) + "m");
-            mCurrentBestLocation = discreteLastKnownLocation;
+            mLocationModel.set(discreteLastKnownLocation);
         }
     }
 
     private void stopListeningForLocation() {
-        if (mCurrentBestLocation != null) {
+        if (mLocationModel.getCurrentBestLocation() != null) {
             ProgressEvent.sendProgressEndEvent(PlacesPresenter.this);
         }
         if (hasFineLocationPermission() && hasCoarseLocationPermission()) {
@@ -135,18 +149,27 @@ public class PlacesPresenter {
         }
     }
 
+    public PlacesModel getPlacesModel() {
+        return mPlacesModel;
+    }
+
+    public LocationModel getLocationModel() {
+        return mLocationModel;
+    }
+
     private LocationListener mLocationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
-            if (mCurrentBestLocation != null) {
+            if (mLocationModel.getCurrentBestLocation() != null) {
                 ProgressEvent.sendProgressEndEvent(PlacesPresenter.this);
             }
 
-            Location discreteLocation = LocationUtils.roundUp(location);
+            Location discreteLocation = LocationUtils.roundDown(location);
 
-            if (LocationUtils.isBetterLocation(discreteLocation, mCurrentBestLocation)) {
+            if (LocationUtils.isBetterLocation(discreteLocation,
+                    mLocationModel.getCurrentBestLocation())) {
                 Logger.d(TAG, "New location correction: " +
                         (int) LocationUtils.distance(discreteLocation, location));
-                mCurrentBestLocation = discreteLocation;
+                mLocationModel.set(discreteLocation);
                 loadPlaces();
             }
         }
@@ -207,6 +230,7 @@ public class PlacesPresenter {
                             "This app cannot work without gps location",
                             Toast.LENGTH_SHORT)
                             .show();
+                    mActivity.finish();
                 }
             }
         }

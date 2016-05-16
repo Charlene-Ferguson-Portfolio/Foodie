@@ -21,8 +21,10 @@ import com.gaborbiro.foodie.di.AppModule;
 import com.gaborbiro.foodie.provider.places.model.Place;
 import com.gaborbiro.foodie.ui.di.DaggerUIComponent;
 import com.gaborbiro.foodie.ui.di.PlacesPresenterModule;
+import com.gaborbiro.foodie.ui.model.PlacesModel;
 
-import java.util.List;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import javax.inject.Inject;
 
@@ -37,9 +39,9 @@ import butterknife.InjectView;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class PlaceListActivity extends AppCompatActivity implements PlacesModel.Listener {
+public class PlaceListActivity extends AppCompatActivity {
 
-    @Inject PlacesPresenter mFoodiePresenter;
+    @Inject PlacesPresenter mPresenter;
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -56,7 +58,7 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
 
         DaggerUIComponent.builder()
                 .appModule(new AppModule(getApplication()))
-                .placesPresenterModule(new PlacesPresenterModule(this, this))
+                .placesPresenterModule(new PlacesPresenterModule(this))
                 .build()
                 .inject(this);
 
@@ -72,7 +74,7 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View view) {
-                mFoodiePresenter.loadPlaces();
+                mPresenter.loadPlaces();
             }
         });
 
@@ -90,12 +92,16 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
 
     @Override protected void onStart() {
         super.onStart();
-        mFoodiePresenter.onScreenStarted();
+        EventBus.getDefault()
+                .register(this);
+        mPresenter.onScreenStarted();
     }
 
     @Override protected void onStop() {
         super.onStop();
-        mFoodiePresenter.onScreenStopped();
+        mPresenter.onScreenStopped();
+        EventBus.getDefault()
+                .unregister(this);
     }
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {
@@ -117,29 +123,29 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
             @NonNull int[] grantResults) {
-        mFoodiePresenter.onRequestPermissionsResult(requestCode, permissions,
-                grantResults);
+        mPresenter.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    @Override public void onModelUpdated(PlacesModel model) {
-        if (model.getError() != null) {
-            Toast.makeText(PlaceListActivity.this, model.getError()
-                    .getMessage(), Toast.LENGTH_SHORT)
-                    .show();
-        } else {
-            List<Place> places = model.getPlaces();
-            mList.setAdapter(new SimpleItemRecyclerViewAdapter(places));
-            mEmptyView.setVisibility(
-                    places == null || places.size() == 0 ? View.VISIBLE : View.GONE);
-        }
+    @Subscribe public void onEvent(PlacesModel.UpdateEvent event) {
+        Place[] places = event.places;
+        mList.setAdapter(new SimpleItemRecyclerViewAdapter(places));
+        mEmptyView.setVisibility(
+                places == null || places.length == 0 ? View.VISIBLE : View.GONE);
+    }
+
+    @Subscribe public void onEvent(PlacesModel.UpdateError event) {
+        event.error.printStackTrace();
+        Toast.makeText(PlaceListActivity.this, event.error.getMessage(),
+                Toast.LENGTH_SHORT)
+                .show();
     }
 
     public class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
-        private final List<Place> mValues;
+        private final Place[] mValues;
 
-        public SimpleItemRecyclerViewAdapter(List<Place> items) {
+        public SimpleItemRecyclerViewAdapter(Place[] items) {
             mValues = items;
         }
 
@@ -150,7 +156,7 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
         }
 
         @Override public void onBindViewHolder(final ViewHolder holder, int position) {
-            Place place = mValues.get(position);
+            Place place = mValues[position];
             holder.mItem = place;
             holder.mIdView.setText(place.name);
             holder.mContentView.setText(place.vicinity);
@@ -178,7 +184,7 @@ public class PlaceListActivity extends AppCompatActivity implements PlacesModel.
         }
 
         @Override public int getItemCount() {
-            return mValues != null ? mValues.size() : 0;
+            return mValues != null ? mValues.length : 0;
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {

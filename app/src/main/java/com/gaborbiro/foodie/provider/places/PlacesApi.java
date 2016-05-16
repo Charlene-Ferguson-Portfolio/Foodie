@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface PlacesApi {
 
-    int getPlaces(Location location, int radius, String type,
+    int getPlaces(double latitude, double longitude, int radius, String type,
             Callback<List<Place>> callback);
 }

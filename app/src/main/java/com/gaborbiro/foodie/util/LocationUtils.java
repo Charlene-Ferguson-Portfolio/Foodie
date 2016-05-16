@@ -2,6 +2,8 @@ package com.gaborbiro.foodie.util;
 
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -107,9 +109,32 @@ public class LocationUtils {
      * that the resulting coordinates are no further away from the origin than {@value
      * LOCATION_UPDATE_THRESHOLD_METERS} meters
      */
-    public static Location roundUp(Location location) {
-        double currentBestLat = location.getLatitude();
-        double currentBestLng = location.getLongitude();
+    public static LatLng roundDown(LatLng location) {
+        double[] discreteLocation = roundDown(location.latitude, location.longitude);
+        return new LatLng(discreteLocation[0], discreteLocation[1]);
+    }
+
+    /**
+     * Round down the coordinates as much as possible by eliminating digits in such a way
+     * that the resulting coordinates are no further away from the origin than {@value
+     * LOCATION_UPDATE_THRESHOLD_METERS} meters
+     */
+    public static Location roundDown(Location location) {
+        Location result = new Location(location);
+        double[] discreteLocation = roundDown(location.getLatitude(), location.getLongitude());
+        result.setLatitude(discreteLocation[0]);
+        result.setLongitude(discreteLocation[1]);
+        return result;
+    }
+
+    /**
+     * Round down the coordinates as much as possible by eliminating digits in such a way
+     * that the resulting coordinates are no further away from the origin than {@value
+     * LOCATION_UPDATE_THRESHOLD_METERS} meters
+     */
+    public static double[] roundDown(double latitude, double longitude) {
+        double currentBestLat = latitude;
+        double currentBestLng = longitude;
         String latStr = Double.toString(currentBestLat);
         String lngStr = Double.toString(currentBestLng);
         boolean stop = false;
@@ -125,8 +150,8 @@ public class LocationUtils {
             }
             double candidateLat = Double.valueOf(latStr);
             double candidateLng = Double.valueOf(lngStr);
-            int distance = (int) distance(location.getLatitude(), location.getLongitude(),
-                    candidateLat, candidateLng);
+            int distance =
+                    (int) distance(latitude, longitude, candidateLat, candidateLng);
 
             if (distance < LOCATION_UPDATE_THRESHOLD_METERS) {
                 currentBestLat = candidateLat;
@@ -135,10 +160,7 @@ public class LocationUtils {
                 stop = true;
             }
         } while (!stop);
-        Location result = new Location(location);
-        result.setLatitude(currentBestLat);
-        result.setLongitude(currentBestLng);
-        return result;
+        return new double[]{currentBestLat, currentBestLng};
     }
 
     private static DecimalFormat getRoundingFormat(int decimals) {

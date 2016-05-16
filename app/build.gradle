@@ -71,4 +71,7 @@ dependencies {
 
     // ButterKnife
     compile 'com.jakewharton:butterknife:6.1.0'
+
+    // Guava
+    compile 'com.google.guava:guava:19.0'
 }
