@@ -27,7 +27,7 @@ import retrofit2.Retrofit;
     }
 
     @Provides @Singleton
-    public PlacesApi provideApi(PlacesApiRequestInterface api) {
-        return new PlacesApiImpl(api);
+    public PlacesApi provideApi(PlacesApiRequestInterface api, @Named("server_url") String baseUrl) {
+        return new PlacesApiImpl(api, baseUrl);
     }
 }

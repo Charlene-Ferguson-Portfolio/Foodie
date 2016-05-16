@@ -8,6 +8,7 @@ public class LocationModel {
 
     public class UpdateEvent {
         public Location currentBestLocation;
+        public boolean firstLocationFetch;
     }
 
     private Location mCurrentBestLocation;
@@ -17,13 +18,17 @@ public class LocationModel {
     }
 
     public void set(Location currentBestLocation) {
+        // TODO mCurrentBestLocation can be set to null (for whatever reason). Handle
+        // that situation too.
+        boolean firstLocationFetch = mCurrentBestLocation == null;
         mCurrentBestLocation = currentBestLocation;
-        sendLocationUpdateEvent();
+        sendLocationUpdateEvent(firstLocationFetch);
     }
 
-    public void sendLocationUpdateEvent() {
+    public void sendLocationUpdateEvent(boolean firstLocationFetch) {
         UpdateEvent event = new UpdateEvent();
         event.currentBestLocation = getCurrentBestLocation();
+        event.firstLocationFetch = firstLocationFetch;
         EventBus.getDefault()
                 .post(event);
     }

@@ -4,4 +4,6 @@
     <string name="no_data_available">No restaurants available</string>
     <string name="title_activity_maps">Restaurant Map</string>
     <string name="menu_map_mode">Show Restaurant Map</string>
+    <string name="open">Open</string>
+    <string name="closed">Closed</string>
 </resources>

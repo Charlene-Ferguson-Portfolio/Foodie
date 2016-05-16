@@ -33,9 +33,9 @@ public class PlacesPresenter {
     private static final String TAG = PlacesPresenter.class.getSimpleName();
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_AND_COARSE_LOCATION = 1;
 
-    private Context mAppContext;
-    private PlacesApi mPlacesApi;
-    private Activity mActivity;
+    protected Context mAppContext;
+    protected PlacesApi mPlacesApi;
+    protected Activity mActivity;
 
     private final PlacesModel mPlacesModel = new PlacesModel();
     private final LocationModel mLocationModel = new LocationModel();
@@ -74,7 +74,7 @@ public class PlacesPresenter {
         if (mLocationModel.getCurrentBestLocation() != null) {
             Location location = mLocationModel.getCurrentBestLocation();
             mPlacesApi.getPlaces(location.getLatitude(), location.getLongitude(),
-                    LocationUtils.SEARCH_RADIUS_METERS, Types.TYPE_RESTAURANT,
+                    LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
                     mPlacesApiCallback);
         } else {
             Toast.makeText(mAppContext, "No location available", Toast.LENGTH_SHORT)
@@ -84,7 +84,7 @@ public class PlacesPresenter {
 
     public void loadPlaces(LatLng target) {
         mPlacesApi.getPlaces(target.latitude, target.longitude,
-                LocationUtils.SEARCH_RADIUS_METERS, Types.TYPE_RESTAURANT,
+                LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
                 mPlacesApiCallback);
     }
 

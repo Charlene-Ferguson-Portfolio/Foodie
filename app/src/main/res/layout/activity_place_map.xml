@@ -1,7 +1,9 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:drawer="http://schemas.android.com/apk/res-auto"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent">
+
     <fragment
         android:id="@+id/map"
         android:name="com.gaborbiro.foodie.ui.UserDetectorMapFragment"
@@ -15,4 +17,74 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:visibility="gone"/>
+
+    <hollowsoft.slidingdrawer.SlidingDrawer
+        android:id="@+id/drawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        drawer:content="@+id/content"
+        android:visibility="gone"
+        drawer:handle="@+id/handle">
+
+        <RelativeLayout
+            android:id="@+id/handle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFF">
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="@dimen/place_thumb_width"
+                android:layout_height="@dimen/place_thumb_height"
+                android:scaleType="fitCenter"
+                android:layout_marginBottom="@dimen/half_margin"
+                android:layout_marginLeft="@dimen/half_margin"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/half_margin"
+                android:layout_marginTop="@dimen/half_margin" />
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/half_margin"
+                android:layout_toRightOf="@id/image"
+                android:lines="1"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/half_margin"
+                android:layout_toRightOf="@id/image"
+                android:layout_below="@id/name"/>
+
+            <RatingBar
+                android:id="@+id/rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/address"
+                style="?android:attr/ratingBarStyleSmall"
+                android:layout_marginTop="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/half_margin"
+                android:layout_marginRight="@dimen/half_margin"
+                android:layout_marginBottom="@dimen/half_margin"
+                android:layout_toRightOf="@id/image"/>
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFF"
+            android:gravity="center"
+            android:text="Content"/>
+
+    </hollowsoft.slidingdrawer.SlidingDrawer>
 </FrameLayout>

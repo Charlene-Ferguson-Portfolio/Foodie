@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.gaborbiro.foodie.provider.places.PlacesApi;
 import com.gaborbiro.foodie.provider.places.di.PlacesApiModule;
+import com.gaborbiro.foodie.ui.MapPresenter;
 import com.gaborbiro.foodie.ui.PlacesPresenter;
 
 import dagger.Module;
@@ -18,7 +19,11 @@ import dagger.Provides;
         mActivity = activity;
     }
 
-    @Provides public PlacesPresenter providePresenter(Context appContext, PlacesApi api) {
+    @Provides public PlacesPresenter providePlacesPresenter(Context appContext, PlacesApi api) {
         return new PlacesPresenter(appContext, api, mActivity);
+    }
+
+    @Provides public MapPresenter provideMapPresenter(Context appContext, PlacesApi api) {
+        return new MapPresenter(appContext, api, mActivity);
     }
 }

@@ -61,7 +61,6 @@ public class PlaceListActivity extends AppCompatActivity {
                 .placesPresenterModule(new PlacesPresenterModule(this))
                 .build()
                 .inject(this);
-
         ButterKnife.inject(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

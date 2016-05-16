@@ -3,10 +3,13 @@ package com.gaborbiro.foodie.provider.places.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 import javax.annotation.Generated;
 
 @Generated("org.jsonschema2pojo") public class OpeningHours implements Parcelable {
 
+    @SerializedName("open_now")
     public boolean openNow;
 
     public OpeningHours(Parcel in) {

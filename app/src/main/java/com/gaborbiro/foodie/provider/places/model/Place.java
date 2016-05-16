@@ -3,6 +3,8 @@ package com.gaborbiro.foodie.provider.places.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,12 +17,14 @@ import javax.annotation.Generated;
     public String id;
     public String name;
     public List<Photo> photos = new ArrayList<Photo>();
+    @SerializedName("place_id")
     public String placeId;
     public double rating;
     public String reference;
     public String scope;
     public List<String> types = new ArrayList<String>();
     public String vicinity;
+    @SerializedName("opening_hours")
     public OpeningHours openingHours;
     public int priceLevel;
 
@@ -140,4 +144,22 @@ import javax.annotation.Generated;
                     return new Place[size];
                 }
             };
+
+    public Photo getPhoto(int idealHeight, int idealWidth) {
+        if (photos == null) {
+            return null;
+        }
+        int bestAvgDiff = Integer.MAX_VALUE;
+        Photo bestPhoto = null;
+
+        for (Photo photo : photos) {
+            int avgDiff = (Math.abs(idealHeight - photo.height) +
+                    Math.abs(idealWidth - photo.width)) / 2;
+            if (avgDiff < bestAvgDiff) {
+                bestAvgDiff = avgDiff;
+                bestPhoto = photo;
+            }
+        }
+        return bestPhoto;
+    }
 }

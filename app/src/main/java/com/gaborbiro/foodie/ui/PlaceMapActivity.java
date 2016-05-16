@@ -17,20 +17,26 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 public class PlaceMapActivity extends FragmentActivity
         implements OnMapReadyCallback, TouchableWrapper.MapTouchListener {
 
-    @Inject public PlacesPresenter mPresenter;
+    @Inject public MapPresenter mPresenter;
     private GoogleMap mMap;
     private boolean mIsFollowingMode = true;
     private LatLng mLastSearchLocation;
+
+    private Map<Marker, Place> mMarkerMap = new HashMap<>();
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +73,13 @@ public class PlaceMapActivity extends FragmentActivity
                             return false;
                         }
                     });
+            mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                @Override public boolean onMarkerClick(Marker marker) {
+                    mPresenter.onPlaceSelected(mMarkerMap.get(marker));
+                    return true;
+                }
+            });
+            mMap.getUiSettings().setZoomControlsEnabled(true);
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -82,16 +95,27 @@ public class PlaceMapActivity extends FragmentActivity
                 .unregister(this);
     }
 
+    @Override public void onBackPressed() {
+        if (!mPresenter.handleBackPressed()) {
+            super.onBackPressed();
+        }
+    }
+
     @Subscribe public void onEvent(LocationModel.UpdateEvent event) {
         if (mIsFollowingMode) {
             LatLng newLocation = new LatLng(event.currentBestLocation.getLatitude(),
                     event.currentBestLocation.getLongitude());
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, 15));
+            if (event.firstLocationFetch) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newLocation, 15));
+            } else {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, 15));
+            }
         }
     }
 
     @Subscribe public void onEvent(PlacesModel.UpdateEvent event) {
         mMap.clear();
+        mMarkerMap.clear();
         for (Place p : event.places) {
             LatLng position =
                     new LatLng(p.geometry.location.lat, p.geometry.location.lng);
@@ -100,9 +124,8 @@ public class PlaceMapActivity extends FragmentActivity
                 snippet.append("\n");
                 snippet.append(p.openingHours.openNow ? "Open" : "Closed");
             }
-            mMap.addMarker(new MarkerOptions().position(position)
-                    .title(p.name)
-                    .snippet(snippet.toString()));
+            Marker m = mMap.addMarker(new MarkerOptions().position(position));
+            mMarkerMap.put(m, p);
         }
     }
 

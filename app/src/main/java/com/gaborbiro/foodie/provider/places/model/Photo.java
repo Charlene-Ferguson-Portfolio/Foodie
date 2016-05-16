@@ -3,11 +3,14 @@ package com.gaborbiro.foodie.provider.places.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 import javax.annotation.Generated;
 
 @Generated("org.jsonschema2pojo") public class Photo implements Parcelable {
 
     public int height;
+    @SerializedName("photo_reference")
     public String photoReference;
     public int width;
 

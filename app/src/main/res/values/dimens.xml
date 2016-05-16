@@ -6,4 +6,7 @@
     <dimen name="double_margin">32dp</dimen>
     <dimen name="margin">16dp</dimen>
     <dimen name="half_margin">8dp</dimen>
+
+    <dimen name="place_thumb_height">96dp</dimen>
+    <dimen name="place_thumb_width">96dp</dimen>
 </resources>
