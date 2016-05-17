@@ -331,6 +331,7 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     };
 
     private void loadPlaceDetails(Place mSelectedPlace) {
+        PlaceDetailBodyAdapter.clear(mContent);
         mPlacesApi.getPlace(mSelectedPlace.placeId, mPlaceDetailsCallback);
     }
 
@@ -353,7 +354,7 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
 
     private void displayPlaces(Place[] places) {
         synchronized (mMap) {
-            mMap.clear();
+            PlaceListAdapter.clear(mMap);
             mMarkerMap = PlaceListAdapter.adapt(places, mMap);
         }
     }

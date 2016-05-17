@@ -26,4 +26,8 @@ public class PlaceListAdapter {
         }
         return markerMap;
     }
+
+    public static void clear(GoogleMap map) {
+        map.clear();
+    }
 }

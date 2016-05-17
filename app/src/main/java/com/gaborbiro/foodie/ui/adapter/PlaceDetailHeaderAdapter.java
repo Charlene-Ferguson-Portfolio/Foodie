@@ -2,6 +2,7 @@ package com.gaborbiro.foodie.ui.adapter;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
@@ -24,9 +25,8 @@ public class PlaceDetailHeaderAdapter {
     }
 
     public static void adapt(Context context, Place place, String imageUri,
-            RelativeLayout headerView) {
-        ViewHolder holder = new ViewHolder();
-        ButterKnife.inject(holder, headerView);
+            ViewGroup view) {
+        ViewHolder holder = getViewHolder(view);
 
         if (imageUri != null) {
             Picasso.with(context)
@@ -52,5 +52,11 @@ public class PlaceDetailHeaderAdapter {
         holder.nameView.setText(name.toString());
         holder.addressView.setText(place.vicinity);
         holder.ratingView.setRating((float) place.rating);
+    }
+
+    private static ViewHolder getViewHolder(ViewGroup view) {
+        ViewHolder holder = new ViewHolder();
+        ButterKnife.inject(holder, view);
+        return holder;
     }
 }
