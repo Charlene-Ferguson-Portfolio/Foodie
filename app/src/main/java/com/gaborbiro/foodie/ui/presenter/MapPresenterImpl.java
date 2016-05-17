@@ -258,7 +258,7 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
                     .show();
         }
         mIsFollowingMode = false;
-        loadPlaces(mMap.getCameraPosition().target);
+        loadPlaces(mMap.getCameraPosition().target, false);
     }
 
     @Override public boolean onMarkerClick(Marker marker) {
@@ -284,24 +284,31 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
 
     @Override public void onRefreshRequested() {
         if (mMap != null) {
-            loadPlaces(mMap.getCameraPosition().target);
+            loadPlaces(mMap.getCameraPosition().target, true);
         }
     }
 
     private void loadPlaces(Location location) {
-        loadPlaces(new LatLng(location.getLatitude(), location.getLongitude()));
+        loadPlaces(new LatLng(location.getLatitude(), location.getLongitude()), false);
     }
 
-    private void loadPlaces(LatLng location) {
-        LatLng target = LocationUtils.roundDown(location);
-        if (mLastSearchLocation == null ||
-                LocationUtils.distance(target.latitude, target.longitude,
-                        mLastSearchLocation.latitude, mLastSearchLocation.longitude) >
-                        LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS) {
-            mLastSearchLocation = target;
-            mPlacesApi.getPlaces(target.latitude, target.longitude,
-                    LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
-                    mPlaceListCallback);
+    private void loadPlaces(LatLng location, boolean force) {
+        if (force) {
+            mLastSearchLocation = location;
+            mPlacesApi.getPlaces(location.latitude, location.longitude,
+                    LocationUtils.SEARCH_RADIUS_METERS,
+                    PlacesApi.Type.TYPE_RESTAURANT, mPlaceListCallback);
+        } else {
+            LatLng target = LocationUtils.roundDown(location);
+            if (mLastSearchLocation == null ||
+                    LocationUtils.distance(target.latitude, target.longitude,
+                            mLastSearchLocation.latitude, mLastSearchLocation.longitude) >
+                            LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS) {
+                mLastSearchLocation = target;
+                mPlacesApi.getPlaces(target.latitude, target.longitude,
+                        LocationUtils.SEARCH_RADIUS_METERS,
+                        PlacesApi.Type.TYPE_RESTAURANT, mPlaceListCallback);
+            }
         }
     }
 
