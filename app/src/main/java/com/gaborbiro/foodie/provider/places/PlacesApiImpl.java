@@ -14,18 +14,16 @@ public class PlacesApiImpl implements PlacesApi {
     private static final String GOOGLE_PLACES_API_KEY =
             "AIzaSyBDwqC3Emv86CJOYxhfC_LYps9caIfucEs";
 
-    private DetailsRequestInterface mDetailsRequest;
-    private NearbySearchRequestInterface mNearbySearchRequest;
+    private PlacesApiRequestInterface mPlacesApiRequestInterface;
 
     private String mServerUrl;
 
     private Call mCurrentDetailsCall;
     private Call mCurrentPlacesCall;
 
-    public PlacesApiImpl(NearbySearchRequestInterface nearbySearchRequest,
-            DetailsRequestInterface detailsRequest, String serverUrl) {
-        mNearbySearchRequest = nearbySearchRequest;
-        mDetailsRequest = detailsRequest;
+    public PlacesApiImpl(PlacesApiRequestInterface placesApiRequestInterface,
+            String serverUrl) {
+        mPlacesApiRequestInterface = placesApiRequestInterface;
         mServerUrl = serverUrl;
     }
 
@@ -33,8 +31,8 @@ public class PlacesApiImpl implements PlacesApi {
         if (mCurrentDetailsCall != null) {
             mCurrentDetailsCall.cancel();
         }
-        mCurrentDetailsCall =
-                mDetailsRequest.getPlaceDetails(placeId, GOOGLE_PLACES_API_KEY);
+        mCurrentDetailsCall = mPlacesApiRequestInterface.getPlaceDetails(placeId,
+                GOOGLE_PLACES_API_KEY);
         RetrofitUtil.executeWithRetry(mCurrentDetailsCall, callback);
         return mCurrentDetailsCall.request()
                 .url()
@@ -47,7 +45,7 @@ public class PlacesApiImpl implements PlacesApi {
         if (mCurrentPlacesCall != null) {
             mCurrentPlacesCall.cancel();
         }
-        mCurrentPlacesCall = mNearbySearchRequest.getPlaces(latitude + "," +
+        mCurrentPlacesCall = mPlacesApiRequestInterface.getPlaces(latitude + "," +
                 longitude, radius, type.getValue(), GOOGLE_PLACES_API_KEY);
         RetrofitUtil.executeWithRetry(mCurrentPlacesCall, callback);
         return mCurrentPlacesCall.request()

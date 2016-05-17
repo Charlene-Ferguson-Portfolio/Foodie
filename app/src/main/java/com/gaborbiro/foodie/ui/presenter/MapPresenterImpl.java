@@ -2,14 +2,16 @@ package com.gaborbiro.foodie.ui.presenter;
 
 import android.app.Activity;
 import android.content.Context;
-import android.text.TextUtils;
+import android.content.res.Resources;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageView;
-import android.widget.RatingBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gaborbiro.foodie.R;
@@ -18,51 +20,66 @@ import com.gaborbiro.foodie.provider.places.model.common.Photo;
 import com.gaborbiro.foodie.provider.places.model.place_details.PlaceDetails;
 import com.gaborbiro.foodie.provider.places.model.places.Place;
 import com.gaborbiro.foodie.provider.retrofit.Callback;
-import com.gaborbiro.foodie.ui.model.LocationModel;
-import com.gaborbiro.foodie.ui.model.PlaceDetailsModel;
-import com.gaborbiro.foodie.ui.model.PlacesModel;
+import com.gaborbiro.foodie.ui.adapter.PlaceDetailBodyAdapter;
+import com.gaborbiro.foodie.ui.adapter.PlaceDetailHeaderAdapter;
+import com.gaborbiro.foodie.ui.adapter.PlaceListAdapter;
+import com.gaborbiro.foodie.ui.view.ProgressEvent;
+import com.gaborbiro.foodie.util.AndroidLocationUtils;
 import com.gaborbiro.foodie.util.LocationUtils;
+import com.gaborbiro.foodie.util.Logger;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.squareup.picasso.Picasso;
+import com.google.common.collect.EvictingQueue;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import hollowsoft.slidingdrawer.OnDrawerOpenListener;
+import hollowsoft.slidingdrawer.SlidingDrawer;
 
-public class MapPresenterImpl extends PlacesPresenterImpl
-        implements MapPresenter, GoogleMap.OnMarkerClickListener {
+public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickListener {
+
+    private static final String TAG = MapPresenterImpl.class.getSimpleName();
+
+    protected Context mAppContext;
+    protected PlacesApi mPlacesApi;
+    protected Activity mActivity;
 
     private GoogleMap mMap;
     private Map<Marker, Place> mMarkerMap = new HashMap<>();
+    private Location mCurrentBestLocation;
     private LatLng mLastSearchLocation;
     private boolean mIsFollowingMode = true;
 
+    private static final int MAX_PLACE_COUNT = 100;
+    /**
+     * Keeps a maximum of {@value MAX_PLACE_COUNT} pins on the map
+     */
+    private Queue<Place> mPlaces = EvictingQueue.create(MAX_PLACE_COUNT);
+
+    /**
+     * From the tapped pin
+     */
     private Place mSelectedPlace;
 
-    @InjectView(R.id.drawer) hollowsoft.slidingdrawer.SlidingDrawer mDrawer;
-
-    @InjectView(R.id.handle) RelativeLayout mHandle;
-    @InjectView(R.id.image) public ImageView mImageView;
-    @InjectView(R.id.name) public TextView mNameView;
-    @InjectView(R.id.address) public TextView mAddressView;
-    @InjectView(R.id.rating) public RatingBar mRatingView;
-
+    @InjectView(R.id.drawer) SlidingDrawer mDrawer;
+    @InjectView(R.id.header) RelativeLayout mHeader;
     @InjectView(R.id.content) RelativeLayout mContent;
-    @InjectView(R.id.opening_hours) TextView mOpeningHoursView;
 
     public MapPresenterImpl(Context appContext, PlacesApi placesApi, Activity activity) {
-        super(appContext, placesApi, activity);
+        mAppContext = appContext;
+        mPlacesApi = placesApi;
+        mActivity = activity;
+
         ButterKnife.inject(this, activity);
         EventBus.getDefault()
                 .unregister(this);
@@ -70,17 +87,47 @@ public class MapPresenterImpl extends PlacesPresenterImpl
         mDrawer.setOnDrawerOpenListener(new OnDrawerOpenListener() {
             @Override public void onDrawerOpened() {
                 if (mSelectedPlace != null) {
-                    mPlacesApi.getPlace(mSelectedPlace.placeId, mPlaceDetailsCallback);
+                    loadPlaceDetails(mSelectedPlace);
                 }
             }
         });
     }
 
-    public void setMap(GoogleMap map) {
+    /**
+     * Invoke this when the map is ready
+     */
+    public void onScreenStarted(GoogleMap map, SlidingDrawer drawer) {
         mMap = map;
+        mDrawer = drawer;
+
+        String[] missingLocationPermissions =
+                AndroidLocationUtils.verifyLocationPermissions(mAppContext);
+
+        if (missingLocationPermissions.length > 0) {
+            AndroidLocationUtils.askForLocationPermissions(mActivity,
+                    missingLocationPermissions);
+        } else {
+            setupMap(mMap);
+            boolean isFirstLocationFetch = mCurrentBestLocation == null;
+            Location lastKnownLocation =
+                    AndroidLocationUtils.getLastKnownLocation(mAppContext);
+
+            if (LocationUtils.isBetterLocation(lastKnownLocation, mCurrentBestLocation)) {
+                mCurrentBestLocation = lastKnownLocation;
+            }
+            startListeningForLocation();
+
+            if (mCurrentBestLocation != null) {
+                centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                loadPlaces(mCurrentBestLocation);
+            }
+        }
+    }
+
+    private void setupMap(GoogleMap map) {
         try {
-            mMap.setMyLocationEnabled(true);
-            mMap.setOnMyLocationButtonClickListener(
+            map.setMyLocationEnabled(true);
+            map.setOnMyLocationButtonClickListener(
                     new GoogleMap.OnMyLocationButtonClickListener() {
 
                         @Override public boolean onMyLocationButtonClick() {
@@ -91,79 +138,118 @@ public class MapPresenterImpl extends PlacesPresenterImpl
                                         .show();
                             }
                             mIsFollowingMode = true;
-                            loadPlaces();
                             return false;
                         }
                     });
-            mMap.setOnMarkerClickListener(this);
-            mMap.getUiSettings()
+            map.setOnMarkerClickListener(this);
+            map.getUiSettings()
                     .setZoomControlsEnabled(true);
         } catch (SecurityException e) {
             e.printStackTrace();
         }
-        EventBus.getDefault()
-                .register(this);
-        super.onScreenStarted();
     }
 
     @Override public void onScreenStopped() {
-        super.onScreenStopped();
-        EventBus.getDefault()
-                .unregister(this);
+        stopListeningForLocation();
     }
 
-    public void loadPlaces() {
-        LatLng target = LocationUtils.roundDown(mMap.getCameraPosition().target);
-        if (mLastSearchLocation == null ||
-                LocationUtils.distance(target.latitude, target.longitude,
-                        mLastSearchLocation.latitude, mLastSearchLocation.longitude) >
-                        LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS) {
-            mLastSearchLocation = target;
-            super.loadPlaces(target);
+    // LOCATION START
+
+    private void startListeningForLocation() {
+        if (mCurrentBestLocation == null) {
+            ProgressEvent.sendProgressStartEvent(this);
+        }
+
+        LocationManager locationManager =
+                (LocationManager) mAppContext.getSystemService(Context.LOCATION_SERVICE);
+        try {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    LocationUtils.LOCATION_UPDATE_THRESHOLD_TIME_MSEC,
+                    LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS, mLocationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    LocationUtils.LOCATION_UPDATE_THRESHOLD_TIME_MSEC,
+                    LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS, mLocationListener);
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
     }
 
-    @Subscribe public void onEvent(LocationModel.UpdateEvent event) {
+    private void stopListeningForLocation() {
+        if (mCurrentBestLocation != null) {
+            ProgressEvent.sendProgressEndEvent(this);
+        }
+        LocationManager locationManager =
+                (LocationManager) mAppContext.getSystemService(Context.LOCATION_SERVICE);
+        try {
+            locationManager.removeUpdates(mLocationListener);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private LocationListener mLocationListener = new LocationListener() {
+        public void onLocationChanged(Location location) {
+            if (mCurrentBestLocation != null) {
+                ProgressEvent.sendProgressEndEvent(this);
+            }
+
+            // We strip the coordinates by a few decimals. Not too much so that the user
+            // doesn't have to pan too much for a new search (we keep search granularity
+            // smaller than the search radius) but enough to greatly increase the
+            // chance of a (retrofit) cache hit if the user pans back to a previously
+            // searched area.
+            Location discreteLocation = LocationUtils.roundDown(location);
+
+            if (LocationUtils.isBetterLocation(discreteLocation, mCurrentBestLocation)) {
+                Logger.d(TAG, "New location correction: " +
+                        (int) LocationUtils.distance(discreteLocation, location));
+                boolean isFirstLocationFetch = mCurrentBestLocation == null;
+                mCurrentBestLocation = discreteLocation;
+                centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                loadPlaces(mCurrentBestLocation);
+            }
+        }
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        public void onProviderEnabled(String provider) {
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+    };
+
+    public void centerZoomCamera(Location location, boolean noAnimation) {
         if (mIsFollowingMode) {
-            LatLng newLocation = new LatLng(event.currentBestLocation.getLatitude(),
-                    event.currentBestLocation.getLongitude());
+            LatLng newLocation =
+                    new LatLng(location.getLatitude(), location.getLongitude());
             CameraUpdate update = CameraUpdateFactory.newLatLngZoom(newLocation, 15);
 
-            if (event.firstLocationFetch) {
+            if (noAnimation) {
                 mMap.moveCamera(update);
             } else {
                 mMap.animateCamera(update);
             }
         }
     }
+    // LOCATION END
 
-    @Subscribe public void onEvent(PlacesModel.UpdateEvent event) {
-        mMap.clear();
-        mMarkerMap.clear();
-        for (Place p : event.places) {
-            LatLng position =
-                    new LatLng(p.geometry.location.lat, p.geometry.location.lng);
-            StringBuffer snippet = new StringBuffer(p.vicinity);
-            if (p.openingHours != null) {
-                snippet.append("\n");
-                snippet.append(p.openingHours.openNow ? "Open" : "Closed");
-            }
-            Marker m = mMap.addMarker(new MarkerOptions().position(position));
-            mMarkerMap.put(m, p);
+    // PERMISSIONS START
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
+            @NonNull int[] grantResults) {
+        if (AndroidLocationUtils.verifyLocationPermissionsResult(requestCode, permissions,
+                grantResults)) {
+            onScreenStarted(mMap, mDrawer);
+        } else {
+            Toast.makeText(mAppContext, "This app cannot work without gps location",
+                    Toast.LENGTH_SHORT)
+                    .show();
+            mActivity.finish();
         }
     }
-
-    @Subscribe public void onEvent(PlacesModel.UpdateError event) {
-        event.error.printStackTrace();
-        Toast.makeText(mAppContext, event.error.getMessage(), Toast.LENGTH_SHORT)
-                .show();
-    }
-
-    @Subscribe public void onEvent(PlaceDetailsModel.UpdateError event) {
-        event.error.printStackTrace();
-        Toast.makeText(mAppContext, event.error.getMessage(), Toast.LENGTH_SHORT)
-                .show();
-    }
+    // PERMISSIONS END
 
     @Override public void onMapTouched() {
         if (mIsFollowingMode) {
@@ -172,67 +258,125 @@ public class MapPresenterImpl extends PlacesPresenterImpl
                     .show();
         }
         mIsFollowingMode = false;
-        loadPlaces();
+        loadPlaces(mMap.getCameraPosition().target);
     }
 
     @Override public boolean onMarkerClick(Marker marker) {
-        displayPlaceHeader(mMarkerMap.get(marker));
+        mSelectedPlace = mMarkerMap.get(marker);
+        displayPlaceHeader(mSelectedPlace);
         return true;
     }
 
+    @Override public boolean handleBackPressed() {
+        if (mContent.getVisibility() == View.VISIBLE) {
+            mDrawer.animateClose();
+            return true;
+        }
+        if (mDrawer.getVisibility() == View.VISIBLE) {
+            hideDrawerHandler();
+            return true;
+        }
+        return false;
+    }
+
+    // DATA LOADING AND DISPLAY START
+
+
+    @Override public void onRefreshRequested() {
+        if (mMap != null) {
+            loadPlaces(mMap.getCameraPosition().target);
+        }
+    }
+
+    private void loadPlaces(Location location) {
+        loadPlaces(new LatLng(location.getLatitude(), location.getLongitude()));
+    }
+
+    private void loadPlaces(LatLng location) {
+        LatLng target = LocationUtils.roundDown(location);
+        if (mLastSearchLocation == null ||
+                LocationUtils.distance(target.latitude, target.longitude,
+                        mLastSearchLocation.latitude, mLastSearchLocation.longitude) >
+                        LocationUtils.LOCATION_UPDATE_THRESHOLD_METERS) {
+            mLastSearchLocation = target;
+            mPlacesApi.getPlaces(target.latitude, target.longitude,
+                    LocationUtils.SEARCH_RADIUS_METERS, PlacesApi.Type.TYPE_RESTAURANT,
+                    mPlaceListCallback);
+        }
+    }
+
+    private final Callback<List<Place>> mPlaceListCallback = new Callback<List<Place>>() {
+        @Override public void onResponse(int requestId, List<Place> result) {
+            mPlaces.addAll(result);
+            displayPlaces(mPlaces.toArray(new Place[mPlaces.size()]));
+        }
+
+        @Override public void onFailure(int requestId, Throwable t) {
+            t.printStackTrace();
+            Toast.makeText(mAppContext, t.getMessage(), Toast.LENGTH_SHORT)
+                    .show();
+        }
+
+        @Override public void onFailure(int requestId, String message) {
+            Toast.makeText(mAppContext, message, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private void loadPlaceDetails(Place mSelectedPlace) {
+        mPlacesApi.getPlace(mSelectedPlace.placeId, mPlaceDetailsCallback);
+    }
+
+    private Callback<PlaceDetails> mPlaceDetailsCallback = new Callback<PlaceDetails>() {
+        @Override public void onResponse(int requestId, PlaceDetails result) {
+            displayPlaceDetails(result);
+        }
+
+        @Override public void onFailure(int requestId, Throwable t) {
+            t.printStackTrace();
+            Toast.makeText(mAppContext, t.getMessage(), Toast.LENGTH_SHORT)
+                    .show();
+        }
+
+        @Override public void onFailure(int requestId, String message) {
+            Toast.makeText(mAppContext, message, Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private void displayPlaces(Place[] places) {
+        synchronized (mMap) {
+            mMap.clear();
+            mMarkerMap = PlaceListAdapter.adapt(places, mMap);
+        }
+    }
+
     private void displayPlaceHeader(Place place) {
-        mSelectedPlace = place;
-        int thumbHeightPx = (int) mActivity.getResources()
-                .getDimension(R.dimen.place_thumb_height);
-        int thumbWidthPx = (int) mActivity.getResources()
-                .getDimension(R.dimen.place_thumb_width);
-        Photo photo = place.getPhoto(thumbHeightPx, thumbWidthPx);
+        Resources res = mAppContext.getResources();
+        int thumbWidthPx = (int) res.getDimension(R.dimen.place_thumb_width);
+        int thumbHeightPx = (int) res.getDimension(R.dimen.place_thumb_height);
+        Photo photo = place.getPhoto(thumbWidthPx, thumbHeightPx);
+        String imageUrl = null;
 
         if (photo != null) {
-            Picasso.with(mAppContext)
-                    .load(mPlacesApi.getPhotoUrlByReference(photo.photoReference,
-                            thumbHeightPx, thumbWidthPx))
-                    .placeholder(R.drawable.ic_restaurant_menu_black_24dp)
-                    .into(mImageView);
-        } else if (!TextUtils.isEmpty(place.icon)) {
-            Picasso.with(mAppContext)
-                    .load(place.icon)
-                    .placeholder(R.drawable.ic_restaurant_menu_black_24dp)
-                    .into(mImageView);
-        } else {
-            mImageView.setImageResource(R.drawable.ic_restaurant_menu_black_24dp);
+            imageUrl =
+                    mPlacesApi.getPhotoUrlByReference(photo.photoReference, thumbWidthPx,
+                            thumbHeightPx);
         }
-        StringBuffer name = new StringBuffer(place.name);
-        if (place.openingHours != null) {
-            name.append(" (");
-            name.append(place.openingHours.openNow ? mAppContext.getString(R.string.open)
-                                                   : mAppContext.getString(
-                                                           R.string.closed));
-            name.append(")");
-        }
-
-        mNameView.setText(name.toString());
-        mAddressView.setText(place.vicinity);
-        mRatingView.setRating((float) place.rating);
+        PlaceDetailHeaderAdapter.adapt(mAppContext, place, imageUrl, mHeader);
 
         if (mDrawer.getVisibility() == View.GONE) {
             showDrawerHandler();
         }
     }
 
-    private Callback<PlaceDetails> mPlaceDetailsCallback = new Callback<PlaceDetails>() {
-        @Override public void onResponse(int requestId, PlaceDetails result) {
-
-        }
-
-        @Override public void onFailure(int requestId, Throwable t) {
-
-        }
-    };
+    private void displayPlaceDetails(PlaceDetails details) {
+        PlaceDetailBodyAdapter.adapt(details, mContent);
+    }
 
     private void showDrawerHandler() {
         Animation bottomUp = AnimationUtils.loadAnimation(mAppContext, R.anim.bottom_up);
-        mHandle.startAnimation(bottomUp);
+        mHeader.startAnimation(bottomUp);
         mDrawer.setVisibility(View.VISIBLE);
     }
 
@@ -252,18 +396,7 @@ public class MapPresenterImpl extends PlacesPresenterImpl
 
             }
         });
-        mHandle.startAnimation(bottomDown);
+        mHeader.startAnimation(bottomDown);
     }
-
-    public boolean handleBackPressed() {
-        if (mContent.getVisibility() == View.VISIBLE) {
-            mDrawer.animateClose();
-            return true;
-        }
-        if (mDrawer.getVisibility() == View.VISIBLE) {
-            hideDrawerHandler();
-            return true;
-        }
-        return false;
-    }
+    // DATA LOADING AND DISPLAY END
 }

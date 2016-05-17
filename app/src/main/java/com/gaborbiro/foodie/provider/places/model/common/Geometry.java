@@ -1,17 +1,10 @@
 package com.gaborbiro.foodie.provider.places.model.common;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import javax.annotation.Generated;
 
-@Generated("org.jsonschema2pojo") public class Geometry implements Parcelable {
+@Generated("org.jsonschema2pojo") public class Geometry {
 
     public Location location;
-
-    public Geometry(Parcel in) {
-        location = in.readParcelable(Location.class.getClassLoader());
-    }
 
     @Override public boolean equals(Object o) {
         if (this == o) return true;
@@ -32,24 +25,4 @@ import javax.annotation.Generated;
     @Override public String toString() {
         return location != null ? location.toString() : "";
     }
-
-    @Override public int describeContents() {
-        return 0;
-    }
-
-    @Override public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(location, 0);
-    }
-
-    public static final Parcelable.Creator<Geometry> CREATOR =
-            new Parcelable.Creator<Geometry>() {
-
-                @Override public Geometry createFromParcel(Parcel in) {
-                    return new Geometry(in);
-                }
-
-                @Override public Geometry[] newArray(int size) {
-                    return new Geometry[size];
-                }
-            };
 }

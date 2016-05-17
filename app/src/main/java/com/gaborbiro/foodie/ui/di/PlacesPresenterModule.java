@@ -7,8 +7,6 @@ import com.gaborbiro.foodie.provider.places.PlacesApi;
 import com.gaborbiro.foodie.provider.places.di.PlacesApiModule;
 import com.gaborbiro.foodie.ui.presenter.MapPresenter;
 import com.gaborbiro.foodie.ui.presenter.MapPresenterImpl;
-import com.gaborbiro.foodie.ui.presenter.PlacesPresenter;
-import com.gaborbiro.foodie.ui.presenter.PlacesPresenterImpl;
 
 import dagger.Module;
 import dagger.Provides;
@@ -19,10 +17,6 @@ import dagger.Provides;
 
     public PlacesPresenterModule(Activity activity) {
         mActivity = activity;
-    }
-
-    @Provides public PlacesPresenter providePlacesPresenter(Context appContext, PlacesApi api) {
-        return new PlacesPresenterImpl(appContext, api, mActivity);
     }
 
     @Provides public MapPresenter provideMapPresenter(Context appContext, PlacesApi api) {

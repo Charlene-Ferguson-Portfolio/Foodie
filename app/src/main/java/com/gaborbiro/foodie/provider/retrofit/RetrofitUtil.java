@@ -2,14 +2,16 @@ package com.gaborbiro.foodie.provider.retrofit;
 
 import android.content.Context;
 import android.os.Environment;
+import android.text.TextUtils;
 
-import com.gaborbiro.foodie.ProgressEvent;
+import com.gaborbiro.foodie.ui.view.ProgressEvent;
 import com.gaborbiro.foodie.util.Logger;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.File;
+import java.io.IOException;
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -56,14 +58,31 @@ public class RetrofitUtil {
             }
             Logger.d(TAG, "Response: " + response.code());
             ProgressEvent.sendProgressEndEvent(CallbackWithRetry.this);
-            try {
-                mCallback.onResponse(call.request()
+
+            if (response.body() != null) {
+                try {
+                    mCallback.onResponse(call.request()
+                            .url()
+                            .hashCode(), response.body());
+                } catch (ClassCastException e) {
+                    mCallback.onResponse(call.request()
+                                    .url()
+                                    .hashCode(),
+                            ((PayloadWrapper<T>) response.body()).getPayload());
+                }
+            } else {
+                String errorMessage = null;
+                try {
+                    errorMessage = response.errorBody()
+                            .string();
+                } catch (IOException e) {
+                }
+                if (TextUtils.isEmpty(errorMessage)) {
+                    errorMessage = response.message();
+                }
+                mCallback.onFailure(call.request()
                         .url()
-                        .hashCode(), response.body());
-            } catch (ClassCastException e) {
-                mCallback.onResponse(call.request()
-                        .url()
-                        .hashCode(), ((PayloadWrapper<T>) response.body()).getPayload());
+                        .hashCode(), errorMessage);
             }
         }
 

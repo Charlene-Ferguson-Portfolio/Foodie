@@ -1,8 +1,5 @@
 package com.gaborbiro.foodie.provider.places.model.places;
 
-import android.os.Parcel;
-import android.os.Parcelable;
-
 import com.gaborbiro.foodie.provider.places.model.common.Geometry;
 import com.gaborbiro.foodie.provider.places.model.common.OpeningHours;
 import com.gaborbiro.foodie.provider.places.model.common.Photo;
@@ -13,39 +10,21 @@ import java.util.List;
 
 import javax.annotation.Generated;
 
-@Generated("org.jsonschema2pojo") public class Place implements Parcelable {
+@Generated("org.jsonschema2pojo") public class Place {
 
     public Geometry geometry;
     public String icon;
     public String id;
     public String name;
     public List<Photo> photos = new ArrayList<Photo>();
-    @SerializedName("place_id")
-    public String placeId;
+    @SerializedName("place_id") public String placeId;
     public double rating;
     public String reference;
     public String scope;
     public List<String> types = new ArrayList<String>();
     public String vicinity;
-    @SerializedName("opening_hours")
-    public OpeningHours openingHours;
+    @SerializedName("opening_hours") public OpeningHours openingHours;
     public int priceLevel;
-
-    public Place(Parcel in) {
-        geometry = in.readParcelable(Geometry.class.getClassLoader());
-        icon = in.readString();
-        id = in.readString();
-        name = in.readString();
-        photos = in.createTypedArrayList(Photo.CREATOR);
-        placeId = in.readString();
-        rating = in.readDouble();
-        reference = in.readString();
-        scope = in.readString();
-        types = in.createStringArrayList();
-        vicinity = in.readString();
-        openingHours = in.readParcelable(OpeningHours.class.getClassLoader());
-        priceLevel = in.readInt();
-    }
 
     @Override public boolean equals(Object o) {
         if (this == o) return true;
@@ -116,39 +95,7 @@ import javax.annotation.Generated;
                 '}';
     }
 
-    @Override public int describeContents() {
-        return 0;
-    }
-
-    @Override public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(geometry, 0);
-        dest.writeString(icon);
-        dest.writeString(id);
-        dest.writeString(name);
-        dest.writeTypedList(photos);
-        dest.writeString(placeId);
-        dest.writeDouble(rating);
-        dest.writeString(reference);
-        dest.writeString(scope);
-        dest.writeStringList(types);
-        dest.writeString(vicinity);
-        dest.writeParcelable(openingHours, 0);
-        dest.writeInt(priceLevel);
-    }
-
-    public static final Parcelable.Creator<Place> CREATOR =
-            new Parcelable.Creator<Place>() {
-
-                @Override public Place createFromParcel(Parcel in) {
-                    return new Place(in);
-                }
-
-                @Override public Place[] newArray(int size) {
-                    return new Place[size];
-                }
-            };
-
-    public Photo getPhoto(int idealHeight, int idealWidth) {
+    public Photo getPhoto(int idealWidth, int idealHeight) {
         if (photos == null) {
             return null;
         }

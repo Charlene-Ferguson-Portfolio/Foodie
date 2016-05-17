@@ -6,8 +6,6 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -19,7 +17,4 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
-    <style name="Foodie.TextAppearance.Title" parent="android:TextAppearance.Material.Title">
-        <item name="android:textColor">?android:textColorPrimary</item>
-    </style>
 </resources>

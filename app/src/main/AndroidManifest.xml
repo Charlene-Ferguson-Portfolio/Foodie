@@ -29,28 +29,14 @@
             android:value="AIzaSyBDwqC3Emv86CJOYxhfC_LYps9caIfucEs"/>
 
         <activity
-            android:name=".ui.PlaceListActivity"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:name=".ui.view.PlaceMapActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".ui.PlaceDetailActivity"
-            android:label="@string/title_foodieplace_detail"
-            android:parentActivityName=".ui.PlaceListActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.PlaceListActivity"/>
-        </activity>
-
-        <activity
-            android:name=".ui.PlaceMapActivity"
-            android:label="@string/title_activity_maps">
         </activity>
     </application>
 

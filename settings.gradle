@@ -1,1 +1,1 @@
-include ':app', ':lib-google-places-api-java'
+include ':app'

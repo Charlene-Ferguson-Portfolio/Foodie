@@ -1,9 +1,8 @@
 package com.gaborbiro.foodie.provider.places.di;
 
-import com.gaborbiro.foodie.provider.places.DetailsRequestInterface;
-import com.gaborbiro.foodie.provider.places.NearbySearchRequestInterface;
 import com.gaborbiro.foodie.provider.places.PlacesApi;
 import com.gaborbiro.foodie.provider.places.PlacesApiImpl;
+import com.gaborbiro.foodie.provider.places.PlacesApiRequestInterface;
 import com.gaborbiro.foodie.provider.retrofit.di.RetrofitModule;
 
 import javax.inject.Named;
@@ -22,20 +21,13 @@ import retrofit2.Retrofit;
     }
 
     @Provides @Singleton
-    public NearbySearchRequestInterface provideNearbySearchRequestInterface(
-            Retrofit retrofit) {
-        return retrofit.create(NearbySearchRequestInterface.class);
+    public PlacesApiRequestInterface providePlacesApiRequestInterface(Retrofit retrofit) {
+        return retrofit.create(PlacesApiRequestInterface.class);
     }
 
     @Provides @Singleton
-    public DetailsRequestInterface provideDetailsRequestInterface(
-            Retrofit retrofit) {
-        return retrofit.create(DetailsRequestInterface.class);
-    }
-
-    @Provides @Singleton
-    public PlacesApi provideApi(NearbySearchRequestInterface nearbySearchRequest,
-            DetailsRequestInterface detailsRequest, @Named("server_url") String baseUrl) {
-        return new PlacesApiImpl(nearbySearchRequest, detailsRequest, baseUrl);
+    public PlacesApi provideApi(PlacesApiRequestInterface placesApiRequestInterface,
+            @Named("server_url") String baseUrl) {
+        return new PlacesApiImpl(placesApiRequestInterface, baseUrl);
     }
 }

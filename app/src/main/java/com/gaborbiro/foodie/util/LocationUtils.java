@@ -20,13 +20,14 @@ public class LocationUtils {
 
     public static final int LOCATION_UPDATE_THRESHOLD_TIME_MSEC = TWO_MINUTES;
     public static final int LOCATION_UPDATE_THRESHOLD_METERS =
-            (int) (SEARCH_RADIUS_METERS * 0.1);
+            (int) (SEARCH_RADIUS_METERS * 0.5);
 
     public static final SimpleDateFormat DATE_FORMAT_ISO8601 =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
 
     /**
      * Determines whether one Location reading is better than the current Location fix
+     * (based on precision and timestamp)
      *
      * @param location            The new Location that you want to evaluate
      * @param currentBestLocation The current Location fix, to which you want to
@@ -56,8 +57,7 @@ public class LocationUtils {
         boolean isNewer = timeDelta > 0;
 
         // If it's been more than two minutes since the current location, use the new
-        // location
-        // because the user has likely moved
+        // location because the user has likely moved
         if (isSignificantlyNewer) {
             Logger.d(TAG, "Sign. newer location found: " + formatLocation(location));
             return true;
@@ -121,7 +121,8 @@ public class LocationUtils {
      */
     public static Location roundDown(Location location) {
         Location result = new Location(location);
-        double[] discreteLocation = roundDown(location.getLatitude(), location.getLongitude());
+        double[] discreteLocation =
+                roundDown(location.getLatitude(), location.getLongitude());
         result.setLatitude(discreteLocation[0]);
         result.setLongitude(discreteLocation[1]);
         return result;
@@ -170,7 +171,7 @@ public class LocationUtils {
     }
 
     private static String fill(char c, int length) {
-        StringBuffer outputBuffer = new StringBuffer(length);
+        StringBuilder outputBuffer = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             outputBuffer.append(c);
         }
@@ -197,7 +198,7 @@ public class LocationUtils {
     }
 
     public static String formatLocation(Location location) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(location.getLatitude());
         buffer.append(",");
         buffer.append(location.getLongitude());

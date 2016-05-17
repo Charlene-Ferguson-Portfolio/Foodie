@@ -1,122 +1,150 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:drawer="http://schemas.android.com/apk/res-auto"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                                 xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                 xmlns:tools="http://schemas.android.com/tools"
+                                                 android:layout_width="match_parent"
+                                                 android:layout_height="match_parent"
+                                                 android:fitsSystemWindows="true"
+                                                 tools:context=".ui.view.PlaceMapActivity">
 
-    <fragment
-        android:id="@+id/map"
-        android:name="com.gaborbiro.foodie.ui.UserDetectorMapFragment"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context=".ui.PlaceMapActivity"/>
-
-    <com.gaborbiro.foodie.ui.AutoProgressIndicator
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
+        android:theme="@style/AppTheme.AppBarOverlay">
 
-    <hollowsoft.slidingdrawer.SlidingDrawer
-        android:id="@+id/drawer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible"
-        drawer:content="@+id/content"
-        drawer:handle="@+id/handle">
-
-        <RelativeLayout
-            android:id="@+id/handle"
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFF">
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
-            <ImageView
-                android:id="@+id/image"
-                android:layout_width="@dimen/place_thumb_width"
-                android:layout_height="@dimen/place_thumb_height"
-                android:layout_marginBottom="@dimen/half_margin"
-                android:layout_marginEnd="@dimen/half_margin"
-                android:layout_marginLeft="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
-                android:layout_marginStart="@dimen/half_margin"
-                android:layout_marginTop="@dimen/half_margin"
-                android:scaleType="fitCenter"/>
+    </android.support.design.widget.AppBarLayout>
 
-            <TextView
-                android:id="@+id/name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
-                android:layout_marginTop="@dimen/half_margin"
-                android:layout_toRightOf="@id/image"
-                android:lines="1"
-                android:textStyle="bold"/>
+    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                 xmlns:drawer="http://schemas.android.com/apk/res-auto"
+                 xmlns:tools="http://schemas.android.com/tools"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent"
+                 app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <TextView
-                android:id="@+id/address"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/name"
-                android:layout_marginEnd="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
-                android:layout_marginTop="@dimen/half_margin"
-                android:layout_toRightOf="@id/image"/>
-
-            <RatingBar
-                android:id="@+id/rating"
-                style="?android:attr/ratingBarStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/address"
-                android:layout_marginBottom="@dimen/half_margin"
-                android:layout_marginEnd="@dimen/half_margin"
-                android:layout_marginRight="@dimen/half_margin"
-                android:layout_marginTop="@dimen/half_margin"
-                android:layout_toRightOf="@id/image"/>
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/content"
+        <fragment
+            android:id="@+id/map"
+            android:name="com.gaborbiro.foodie.ui.view.NonProgrammaticTouchDetectorMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#FFF">
+            tools:context=".ui.view.PlaceMapActivity"/>
 
-            <com.gaborbiro.foodie.ui.AutoProgressIndicator
-                android:id="@+id/content_progress_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone"/>
+        <com.gaborbiro.foodie.ui.view.AutoProgressIndicator
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
 
-            <View
-                android:id="@+id/separator"
+        <hollowsoft.slidingdrawer.SlidingDrawer
+            android:id="@+id/drawer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            drawer:content="@+id/content"
+            drawer:handle="@+id/header">
+
+            <RelativeLayout
+                android:id="@+id/header"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@android:color/darker_gray"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/separator"
-                android:orientation="horizontal">
+                android:background="#FFF">
 
                 <ImageView
-                    android:layout_width="@dimen/content_icon_width"
-                    android:layout_height="@dimen/content_icon_height"
-                    android:layout_margin="@dimen/half_margin"
-                    android:src="@drawable/ic_schedule_black_24dp"
-                    android:tint="@color/colorPrimary"/>
+                    android:id="@+id/image"
+                    android:layout_width="@dimen/place_thumb_width"
+                    android:layout_height="@dimen/place_thumb_height"
+                    android:layout_marginBottom="@dimen/half_margin"
+                    android:layout_marginEnd="@dimen/half_margin"
+                    android:layout_marginLeft="@dimen/half_margin"
+                    android:layout_marginRight="@dimen/half_margin"
+                    android:layout_marginStart="@dimen/half_margin"
+                    android:layout_marginTop="@dimen/half_margin"
+                    android:scaleType="fitCenter"/>
 
                 <TextView
-                    android:id="@+id/opening_hours"
+                    android:id="@+id/name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/half_margin"
+                    android:layout_marginRight="@dimen/half_margin"
+                    android:layout_marginTop="@dimen/half_margin"
+                    android:layout_toRightOf="@id/image"
+                    android:lines="1"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/name"
+                    android:layout_marginEnd="@dimen/half_margin"
+                    android:layout_marginRight="@dimen/half_margin"
+                    android:layout_marginTop="@dimen/half_margin"
+                    android:layout_toRightOf="@id/image"/>
+
+                <RatingBar
+                    android:id="@+id/rating"
+                    style="?android:attr/ratingBarStyleSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/address"
+                    android:layout_marginBottom="@dimen/half_margin"
+                    android:layout_marginEnd="@dimen/half_margin"
+                    android:layout_marginRight="@dimen/half_margin"
+                    android:layout_marginTop="@dimen/half_margin"
+                    android:layout_toRightOf="@id/image"/>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#FFF">
+
+                <com.gaborbiro.foodie.ui.view.AutoProgressIndicator
+                    android:id="@+id/content_progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:visibility="gone"/>
+
+                <View
+                    android:id="@+id/separator"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@android:color/darker_gray"/>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/half_margin"/>
-            </LinearLayout>
-        </RelativeLayout>
+                    android:layout_below="@id/separator"
+                    android:orientation="horizontal">
 
-    </hollowsoft.slidingdrawer.SlidingDrawer>
-</FrameLayout>
+                    <ImageView
+                        android:layout_width="@dimen/content_icon_width"
+                        android:layout_height="@dimen/content_icon_height"
+                        android:layout_margin="@dimen/half_margin"
+                        android:src="@drawable/ic_schedule_black_24dp"
+                        android:tint="@color/colorAccent"/>
+
+                    <TextView
+                        android:id="@+id/opening_hours"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/half_margin"
+                        android:layout_marginEnd="@dimen/half_margin"
+                        android:layout_marginRight="@dimen/half_margin"
+                        android:layout_marginTop="@dimen/half_margin"
+                        />
+                </LinearLayout>
+            </RelativeLayout>
+
+        </hollowsoft.slidingdrawer.SlidingDrawer>
+    </FrameLayout>
+</android.support.design.widget.CoordinatorLayout>

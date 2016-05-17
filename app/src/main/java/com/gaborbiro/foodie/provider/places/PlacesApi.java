@@ -6,12 +6,20 @@ import com.gaborbiro.foodie.provider.retrofit.Callback;
 
 import java.util.List;
 
+/**
+ * Interface for loading places and place details from Google Places API
+ */
 public interface PlacesApi {
 
+    /**
+     * Fetch the details for one place
+     *
+     * @return request id
+     */
     int getPlace(String placeId, Callback<PlaceDetails> callback);
 
     /**
-     * Fetch Places from Google Places API
+     * Fetch a list of places from Google Places API
      *
      * @param radius in meters
      * @return request id
@@ -19,9 +27,13 @@ public interface PlacesApi {
     int getPlaces(double latitude, double longitude, int radius, Type type,
             Callback<List<Place>> callback);
 
+    /**
+     * Utility method, does not involve network operation. Use it to get hold of image
+     * url's for the Google Places API
+     */
     String getPhotoUrlByReference(String reference, int maxWidth, int maxHeight);
 
-    public enum Type {
+    enum Type {
         TYPE_ACCOUNTING("accounting"),
         TYPE_AIRPORT("airport"),
         TYPE_AMUSEMENT_PARK("amusement_park"),

@@ -4,4 +4,6 @@ public interface Callback<T> {
     void onResponse(int requestId, T result);
 
     void onFailure(int requestId, Throwable t);
+
+    void onFailure(int requestId, String message);
 }
