@@ -71,9 +71,12 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
      */
     private Place mSelectedPlace;
 
-    @InjectView(R.id.drawer) SlidingDrawer mDrawer;
-    @InjectView(R.id.header) RelativeLayout mHeader;
-    @InjectView(R.id.content) RelativeLayout mContent;
+    @InjectView(R.id.drawer)
+    SlidingDrawer mDrawer;
+    @InjectView(R.id.header)
+    RelativeLayout mHeader;
+    @InjectView(R.id.content)
+    RelativeLayout mContent;
 
     public MapPresenterImpl(Context appContext, PlacesApi placesApi, Activity activity) {
         mAppContext = appContext;
@@ -85,7 +88,8 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
                 .unregister(this);
 
         mDrawer.setOnDrawerOpenListener(new OnDrawerOpenListener() {
-            @Override public void onDrawerOpened() {
+            @Override
+            public void onDrawerOpened() {
                 if (mSelectedPlace != null) {
                     loadPlaceDetails(mSelectedPlace);
                 }
@@ -107,7 +111,7 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
             AndroidLocationUtils.askForLocationPermissions(mActivity,
                     missingLocationPermissions);
         } else {
-            setupMap(mMap);
+            setupMap(mMap, drawer.getContext());
             boolean isFirstLocationFetch = mCurrentBestLocation == null;
             Location lastKnownLocation =
                     AndroidLocationUtils.getLastKnownLocation(mAppContext);
@@ -118,19 +122,22 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
             startListeningForLocation();
 
             if (mCurrentBestLocation != null) {
-                centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                if (mIsFollowingMode) {
+                    centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                }
                 loadPlaces(mCurrentBestLocation);
             }
         }
     }
 
-    private void setupMap(GoogleMap map) {
+    private void setupMap(GoogleMap map, Context context) {
         try {
             map.setMyLocationEnabled(true);
             map.setOnMyLocationButtonClickListener(
                     new GoogleMap.OnMyLocationButtonClickListener() {
 
-                        @Override public boolean onMyLocationButtonClick() {
+                        @Override
+                        public boolean onMyLocationButtonClick() {
                             if (!mIsFollowingMode) {
                                 Toast.makeText(mAppContext,
                                         "The map is now following you",
@@ -149,7 +156,8 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
         }
     }
 
-    @Override public void onScreenStopped() {
+    @Override
+    public void onScreenStopped() {
         stopListeningForLocation();
     }
 
@@ -205,7 +213,9 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
                         (int) LocationUtils.distance(discreteLocation, location));
                 boolean isFirstLocationFetch = mCurrentBestLocation == null;
                 mCurrentBestLocation = discreteLocation;
-                centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                if (mIsFollowingMode) {
+                    centerZoomCamera(mCurrentBestLocation, isFirstLocationFetch);
+                }
                 loadPlaces(mCurrentBestLocation);
             }
         }
@@ -221,16 +231,26 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     };
 
     public void centerZoomCamera(Location location, boolean noAnimation) {
-        if (mIsFollowingMode) {
-            LatLng newLocation =
-                    new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(newLocation, 15);
+        LatLng newLocation =
+                new LatLng(location.getLatitude(), location.getLongitude());
+        CameraUpdate update = CameraUpdateFactory.newLatLngZoom(newLocation, 15);
 
-            if (noAnimation) {
-                mMap.moveCamera(update);
-            } else {
-                mMap.animateCamera(update);
-            }
+        if (noAnimation) {
+            mMap.moveCamera(update);
+        } else {
+            mMap.animateCamera(update);
+        }
+    }
+
+    public void centerMoveCamera(Location location, boolean noAnimation) {
+        LatLng newLocation =
+                new LatLng(location.getLatitude(), location.getLongitude());
+        CameraUpdate update = CameraUpdateFactory.newLatLng(newLocation);
+
+        if (noAnimation) {
+            mMap.moveCamera(update);
+        } else {
+            mMap.animateCamera(update);
         }
     }
     // LOCATION END
@@ -238,7 +258,7 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     // PERMISSIONS START
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[],
-            @NonNull int[] grantResults) {
+                                           @NonNull int[] grantResults) {
         if (AndroidLocationUtils.verifyLocationPermissionsResult(requestCode, permissions,
                 grantResults)) {
             onScreenStarted(mMap, mDrawer);
@@ -251,23 +271,44 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     }
     // PERMISSIONS END
 
-    @Override public void onMapTouched() {
+    @Override
+    public void onMapPinched() {
+        Toast.makeText(mAppContext, "Pinch",
+                Toast.LENGTH_SHORT)
+                .show();
+        if (mMap.getUiSettings().isScrollGesturesEnabled()) {
+            mMap.getUiSettings().setScrollGesturesEnabled(false);
+        }
+    }
+
+    @Override
+    public void onMapZoomed(float zoom) {
+        mMap.animateCamera(CameraUpdateFactory.zoomBy(zoom), 50, null);
+    }
+
+    @Override
+    public void onMapReleased() {
         if (mIsFollowingMode) {
             Toast.makeText(mAppContext, "The map has stopped following you",
                     Toast.LENGTH_SHORT)
                     .show();
         }
         mIsFollowingMode = false;
+        if (!mMap.getUiSettings().isScrollGesturesEnabled()) {
+            mMap.getUiSettings().setScrollGesturesEnabled(true);
+        }
         loadPlaces(mMap.getCameraPosition().target, false);
     }
 
-    @Override public boolean onMarkerClick(Marker marker) {
+    @Override
+    public boolean onMarkerClick(Marker marker) {
         mSelectedPlace = mMarkerMap.get(marker);
         displayPlaceHeader(mSelectedPlace);
         return true;
     }
 
-    @Override public boolean handleBackPressed() {
+    @Override
+    public boolean handleBackPressed() {
         if (mContent.getVisibility() == View.VISIBLE) {
             mDrawer.animateClose();
             return true;
@@ -282,7 +323,8 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     // DATA LOADING AND DISPLAY START
 
 
-    @Override public void onRefreshRequested() {
+    @Override
+    public void onRefreshRequested() {
         if (mMap != null) {
             loadPlaces(mMap.getCameraPosition().target, true);
         }
@@ -313,18 +355,21 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     }
 
     private final Callback<List<Place>> mPlaceListCallback = new Callback<List<Place>>() {
-        @Override public void onResponse(int requestId, List<Place> result) {
+        @Override
+        public void onResponse(int requestId, List<Place> result) {
             mPlaces.addAll(result);
             displayPlaces(mPlaces.toArray(new Place[mPlaces.size()]));
         }
 
-        @Override public void onFailure(int requestId, Throwable t) {
+        @Override
+        public void onFailure(int requestId, Throwable t) {
             t.printStackTrace();
             Toast.makeText(mAppContext, t.getMessage(), Toast.LENGTH_SHORT)
                     .show();
         }
 
-        @Override public void onFailure(int requestId, String message) {
+        @Override
+        public void onFailure(int requestId, String message) {
             Toast.makeText(mAppContext, message, Toast.LENGTH_SHORT)
                     .show();
         }
@@ -336,17 +381,20 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
     }
 
     private Callback<PlaceDetails> mPlaceDetailsCallback = new Callback<PlaceDetails>() {
-        @Override public void onResponse(int requestId, PlaceDetails result) {
+        @Override
+        public void onResponse(int requestId, PlaceDetails result) {
             displayPlaceDetails(result);
         }
 
-        @Override public void onFailure(int requestId, Throwable t) {
+        @Override
+        public void onFailure(int requestId, Throwable t) {
             t.printStackTrace();
             Toast.makeText(mAppContext, t.getMessage(), Toast.LENGTH_SHORT)
                     .show();
         }
 
-        @Override public void onFailure(int requestId, String message) {
+        @Override
+        public void onFailure(int requestId, String message) {
             Toast.makeText(mAppContext, message, Toast.LENGTH_SHORT)
                     .show();
         }
@@ -392,15 +440,18 @@ public class MapPresenterImpl implements MapPresenter, GoogleMap.OnMarkerClickLi
         Animation bottomDown =
                 AnimationUtils.loadAnimation(mAppContext, R.anim.bottom_down);
         bottomDown.setAnimationListener(new Animation.AnimationListener() {
-            @Override public void onAnimationStart(Animation animation) {
+            @Override
+            public void onAnimationStart(Animation animation) {
 
             }
 
-            @Override public void onAnimationEnd(Animation animation) {
+            @Override
+            public void onAnimationEnd(Animation animation) {
                 mDrawer.setVisibility(View.GONE);
             }
 
-            @Override public void onAnimationRepeat(Animation animation) {
+            @Override
+            public void onAnimationRepeat(Animation animation) {
 
             }
         });

@@ -6,6 +6,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -165,7 +166,10 @@ public class LocationUtils {
     }
 
     private static DecimalFormat getRoundingFormat(int decimals) {
-        DecimalFormat df = new DecimalFormat("#." + fill('#', decimals));
+        DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols();
+        otherSymbols.setDecimalSeparator('.');
+        otherSymbols.setGroupingSeparator(',');
+        DecimalFormat df = new DecimalFormat("#." + fill('#', decimals), otherSymbols);
         df.setRoundingMode(RoundingMode.FLOOR);
         return df;
     }

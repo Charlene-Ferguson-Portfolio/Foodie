@@ -76,8 +76,18 @@ public class PlaceMapActivity extends AppCompatActivity
         return true;
     }
 
-    @Override public void onMapTouched() {
-        mPresenter.onMapTouched();
+    @Override
+    public void onMapPinched() {
+        mPresenter.onMapPinched();
+    }
+
+    @Override
+    public void onMapZoomed(float zoom) {
+        mPresenter.onMapZoomed(zoom);
+    }
+
+    @Override public void onMapReleased() {
+        mPresenter.onMapReleased();
     }
 
     @Override
